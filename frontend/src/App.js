@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as faceapi from "face-api.js/dist/face-api.min.js";
 import Webcam from "react-webcam";
 import io from "socket.io-client";
 import "./App.css";
 
+// 🔴 CRITICAL FIX: Grab the library from the browser window
+// (Since we removed the import, we must define it here)
+const faceapi = window.faceapi;
+
 // --- DEPLOYMENT CONFIGURATION ---
-// 🔴 WE ARE FORCING THE LIVE CONNECTION HERE
-// This ensures your app ALWAYS connects to your Render Backend
 const BACKEND_URL = "https://ark-chat-ikzt.onrender.com";
 
 const socket = io.connect(BACKEND_URL);
@@ -61,6 +62,14 @@ function App() {
     const loadModels = async () => {
       const MODEL_URL = "/models";
       try {
+        // Double check faceapi exists before using it
+        if (!faceapi) {
+          console.error(
+            "FaceAPI not found. Did you add the script to index.html?",
+          );
+          return;
+        }
+
         await Promise.all([
           faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
