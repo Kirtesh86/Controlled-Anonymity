@@ -8,12 +8,10 @@ app.use(cors());
 
 const server = http.createServer(app);
 
-// 1. DEPLOYMENT CONFIG: Use dynamic port
 const PORT = process.env.PORT || 3001;
 
 const io = new Server(server, {
   cors: {
-    // 2. SECURITY: Allow connection from anywhere (for easiest deployment)
     origin: "*",
     methods: ["GET", "POST"],
   },
@@ -21,23 +19,20 @@ const io = new Server(server, {
 
 // --- STATE ---
 let waitingQueue = [];
-const userUsage = {}; // The Ledger: { "dev_123": { count: 2, date: "2/3/2026" } }
+const userUsage = {}; 
 const DAILY_LIMIT = 10;
 
-// --- HELPER: Cleanly leave a room ---
 function leaveRoom(socket) {
-  // find the room ID (it starts with 'room_')
   const roomID = Array.from(socket.rooms).find((r) => r.startsWith("room_"));
 
   if (roomID) {
-    // Notify the partner
+
     socket.to(roomID).emit("receive_message", {
       sender: "System",
       message: "The stranger has left the chat. 🚪",
     });
-    socket.to(roomID).emit("partner_left"); // Tell frontend partner is gone
+    socket.to(roomID).emit("partner_left"); 
 
-    // Leave the room
     socket.leave(roomID);
   }
 }
@@ -45,21 +40,18 @@ function leaveRoom(socket) {
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  // 1. User joins the Queue
   socket.on("join_queue", (userData) => {
     const { nickname, gender, genderFilter, deviceId } = userData;
 
-    // Check if they are already in a room and remove them first (Next Match Logic)
     leaveRoom(socket);
 
-    // --- FAIRNESS CHECK 🛑 ---
     if (genderFilter !== "Any") {
       const today = new Date().toLocaleDateString();
-      // Initialize if new user or new day
+    
       if (!userUsage[deviceId] || userUsage[deviceId].date !== today) {
         userUsage[deviceId] = { count: 0, date: today };
       }
-      // Check Limit
+ 
       if (userUsage[deviceId].count >= DAILY_LIMIT) {
         socket.emit("receive_message", {
           sender: "System",
@@ -68,17 +60,16 @@ io.on("connection", (socket) => {
         });
         return; // Stop here.
       }
-      // Increment Count
+      
       userUsage[deviceId].count++;
       console.log(
         `Device ${deviceId} usage: ${userUsage[deviceId].count}/${DAILY_LIMIT}`,
       );
     }
-    // ---------------------------
+
 
     console.log(`${nickname} (${gender}) joined. Looking for: ${genderFilter}`);
 
-    // LOGIC: Find a match
     const matchIndex = waitingQueue.findIndex((user) => {
       const isNotMe = user.id !== socket.id;
       const matchesMyFilter =
@@ -89,9 +80,9 @@ io.on("connection", (socket) => {
     });
 
     if (matchIndex !== -1) {
-      // MATCH FOUND! 🎉
+
       const partnerSocket = waitingQueue[matchIndex].socket;
-      waitingQueue.splice(matchIndex, 1); // Remove partner from queue
+      waitingQueue.splice(matchIndex, 1); 
 
       const roomID = `room_${socket.id}_${partnerSocket.id}`;
 
@@ -101,7 +92,7 @@ io.on("connection", (socket) => {
       io.to(roomID).emit("match_found", { roomID });
       console.log(`Match Created: ${roomID}`);
     } else {
-      // NO MATCH. Add to queue.
+
       waitingQueue.push({
         id: socket.id,
         socket: socket,
@@ -112,19 +103,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 2. Report User
   socket.on("report_user", () => {
     console.log(`User ${socket.id} reported their partner.`);
-    leaveRoom(socket); // Immediately disconnect
+    leaveRoom(socket); 
   });
 
-  // 3. Relay Messages
   socket.on("send_message", (data) => {
     const { roomID, message, sender } = data;
     socket.to(roomID).emit("receive_message", { message, sender });
   });
 
-  // 4. Disconnect
   socket.on("disconnect", () => {
     console.log("User Disconnected", socket.id);
     leaveRoom(socket);
