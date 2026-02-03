@@ -3,7 +3,6 @@ import Webcam from "react-webcam";
 import io from "socket.io-client";
 import "./App.css";
 
-// 🔴 CRITICAL FIX: Grab the library from the browser window
 const faceapi = window.faceapi;
 
 // --- DEPLOYMENT CONFIGURATION ---
@@ -94,10 +93,8 @@ function App() {
     });
 
     socket.on("partner_left", () => {
-      // Optional: You could show a specialized UI here
     });
 
-    // Cleanup
     return () => {
       socket.off("match_found");
       socket.off("receive_message");
@@ -130,7 +127,7 @@ function App() {
         .withFaceDescriptor()
         .withAgeAndGender();
 
-      setSelfieImage(null); // Privacy Rule
+      setSelfieImage(null);
 
       if (!detection) {
         setResultMessage("❌ No face detected. Try again.");
@@ -149,7 +146,6 @@ function App() {
         localStorage.setItem("klymo_user_profile", JSON.stringify(newProfile));
         setUserProfile(newProfile);
 
-        // 🟢 FEATURE: Tells you exactly which gender was detected
         setResultMessage(`✅ Verified as ${genderText}! Setup profile.`);
         setStatusClass("result-success");
         setTimeout(() => setView("PROFILE"), 1500);
@@ -236,7 +232,6 @@ function App() {
     }
   };
 
-  // --- RENDER ---
   return (
     <div className="glass-container">
       {/* HEADER: UPDATED BRANDING */}
@@ -249,7 +244,6 @@ function App() {
             fontWeight: "300",
             letterSpacing: "2px",
             marginTop: "5px",
-            // 🟢 FIXED: Opacity removed (1) + Shadow added
             opacity: "1",
             color: "#ffffff",
             textShadow: "0px 1px 3px rgba(0,0,0,0.8)",
