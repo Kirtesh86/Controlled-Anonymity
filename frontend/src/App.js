@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as faceapi from "face-api.js";
+import * as faceapi from "face-api.js/dist/face-api.min.js";
 import Webcam from "react-webcam";
 import io from "socket.io-client";
 import "./App.css";
 
 // --- DEPLOYMENT CONFIGURATION ---
-// Automatically switches between Localhost and your Cloud Backend
-const BACKEND_URL =
-  window.location.hostname === "localhost"
-    ? "http://localhost:3001"
-    : "https://YOUR-APP-NAME.onrender.com"; // <--- 🔴 PASTE YOUR RENDER URL HERE AFTER DEPLOYING
+// 🔴 WE ARE FORCING THE LIVE CONNECTION HERE
+// This ensures your app ALWAYS connects to your Render Backend
+const BACKEND_URL = "https://ark-chat-ikzt.onrender.com";
 
 const socket = io.connect(BACKEND_URL);
 
