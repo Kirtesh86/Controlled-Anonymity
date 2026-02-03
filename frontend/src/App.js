@@ -242,7 +242,7 @@ function App() {
     <div className="glass-container">
       {/* HEADER: UPDATED BRANDING */}
       <h1>
-        ARK-Chat
+        ZenTalk
         <span
           style={{
             display: "block",
